@@ -1,0 +1,5 @@
+.idea
+build
+dist
+test_auto.egg-info
+venv
