@@ -16,7 +16,7 @@ test_task_003 = DefaultTestTask()
 test_task_003.add_test_cases_by_files(
     r'E:\Software Testing\Software Development\Python\PycharmProjects\testauto\testauto_test\test_case.py')
 test_task_003.add_filter(TestCasePriorityShouldBe(OperationMethod.EQUAL, TestCasePriority.P0))
-test_task_003.filter_test_case()
+test_task_003.filter_test_cases()
 
 
 def test_task_004():

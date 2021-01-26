@@ -21,7 +21,7 @@ class TestCaseResult(Enum):
 
 class TestCase(ABC):
     """
-    测试用例抽象类：测试用例类必须继承至它。
+    测试用例抽象类
     """
 
     project = 'Default Project'
@@ -79,11 +79,11 @@ class TestCase(ABC):
 
     def get_param_value(self, param_name: str):
         """
-        获取参数值：参数化测试时，获取@parameterized装饰器传入的参数对应的参数值。
+        获取参数值：参数化测试时，配合@parameterized装饰器使用。
         :param param_name: 参数名
         :return:
         """
         try:
             return self.__dict__[param_name]
         except KeyError:
-            raise ValueError('没有该参数：{}！'.format(param_name))
+            raise ValueError('参数{}不存在！'.format(param_name))

@@ -7,9 +7,9 @@ from typing import AnyStr, Tuple, List
 from .case import TestCase
 
 
-def gen_universal_path(src_path: str):
+def handle_path(src_path: str):
     """
-    生成通用的路径：兼容Windows、macOS和Linux操作系统。
+    处理路径，使其兼容Windows、macOS和Linux操作系统。
     :param src_path: 源路径
     :return:
     """
@@ -36,8 +36,6 @@ def assert_raise(callable_obj, exception, msg=None):
     except Exception as e:
         if isinstance(e, exception):
             return
-        else:
-            raise AssertionError(msg) if msg else AssertionError()
     raise AssertionError(msg) if msg else AssertionError()
 
 
@@ -81,7 +79,7 @@ def format_timestamp(src_time: float, target_format='%Y-%m-%d %H:%M:%S'):
     """
     格式化时间戳
     :param src_time: 时间戳
-    :param target_format: 格式
+    :param target_format: 指定的格式
     :return:
     """
     return strftime(target_format, localtime(int(src_time)))
@@ -100,7 +98,7 @@ def seconds_to_time(seconds: int):
 
 class Writer:
     """
-    写入类
+    写工具类
     """
 
     def __init__(self, format_str='%(asctime)s[%(levelname)s]: %(message)s'):

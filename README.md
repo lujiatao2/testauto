@@ -236,14 +236,14 @@ test_task_003 = DefaultTestTask()
 test_task_003.add_test_cases_by_files(
     r'E:\Software Testing\Software Development\Python\PycharmProjects\testauto\testauto_test\test_case.py')
 test_task_003.add_filter(TestCasePriorityShouldBe(OperationMethod.EQUAL, TestCasePriority.P0))
-test_task_003.filter_test_case()
+test_task_003.filter_test_cases()
 
 if __name__ == '__main__':
     main(test_task=test_task_003)
 
 ```
 
-&emsp;&emsp;从以上代码可以看出：在添加了过滤器后，要真正执行过滤操作，需要调用filter_test_case()方法。  
+&emsp;&emsp;从以上代码可以看出：在添加了过滤器后，要真正执行过滤操作，需要调用filter_test_cases()方法。  
 &emsp;&emsp;另外，DefaultTestTask默认包含TestCaseCompletedShouldBe过滤器，且过滤条件为OperationMethod.EQUAL和True，即测试用例完成状态等于True的测试用例才会被保留。当然你可以调用clear_test_task()
 方法来阻止该行为，该方法会清空测试任务中的所有测试用例和过滤器。
 
@@ -340,7 +340,7 @@ if __name__ == '__main__':
 
 ```
 
-&emsp;&emsp;重新执行test_task_005，可以看到耗时为4秒。  
+&emsp;&emsp;重新执行test_task_005，可以看到耗时为5秒。  
 &emsp;&emsp;需要注意的是，多线程执行测试用例时，需考虑线程安全性，如果多个测试用例同时对一个资源进行修改，会造成意想不到的结果。
 
 # 参数化测试
@@ -378,7 +378,7 @@ if __name__ == '__main__':
 
 ```
 
-&emsp;&emsp;注意test_task_006添加测试用例的方式不是直接传递测试用例实例，因为参数化测试时，需要根据参数的数量来动态创建测试用例对象，这个过程是testauto自动完成的。  
+&emsp;&emsp;注意test_task_006添加测试用例的方式不是直接传递测试用例对象，因为参数化测试时，需要根据参数的数量来动态创建测试用例对象，这个过程是testauto自动完成的。  
 &emsp;&emsp;执行结果如下：
 
 ```

@@ -3,3 +3,4 @@ build
 dist
 test_auto.egg-info
 venv
+*/__pycache__

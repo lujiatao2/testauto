@@ -95,7 +95,7 @@ class TestCase011(TestCase):
 
     def test_case(self):
         sleep(3)
-        raise RuntimeError('我是TestCase010，这是我抛的异常！')
+        raise RuntimeError('我是TestCase011，这是我抛的异常！')
 
 
 class TestCase012(TestCase):

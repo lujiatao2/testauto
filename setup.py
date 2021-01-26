@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='UTF-8') as file:
 
 setup(
     name='test-auto',
-    version='1.0.0',
+    version='1.0.1',
     description='Python软件自动化测试框架，支持多线程和参数化测试，且自带HTML测试报告！',
     long_description=long_description,
     long_description_content_type='text/markdown',

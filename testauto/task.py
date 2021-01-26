@@ -6,7 +6,7 @@ from inspect import getmembers, isclass
 from typing import List
 
 from .case import TestCase, TestCasePriority
-from .util import gen_universal_path
+from .util import handle_path
 
 
 class OperationMethod(Enum):
@@ -22,7 +22,7 @@ class OperationMethod(Enum):
 
 class TestCaseFilter(ABC):
     """
-    测试用例过滤器
+    测试用例过滤器抽象类
     """
 
     def __init__(self, operation_method: OperationMethod):
@@ -129,9 +129,9 @@ class TestTask(ABC):
         pass
 
     @abstractmethod
-    def filter_test_case(self):
+    def filter_test_cases(self):
         """
-        过滤测试用例：将不满足规则的测试用例过滤掉，当然如果你很明确哪条（或哪几条）测试用例不需要，那么可直接调用remove_test_case()（或remove_test_cases()）方法。
+        过滤测试用例：将不满足测试用例过滤器规则的测试用例过滤掉。
         :return:
         """
         pass
@@ -169,9 +169,9 @@ class DefaultTestTask(TestTask):
             if hasattr(tmp_module, tmp_class_str):
                 tmp_class = getattr(tmp_module, tmp_class_str)
                 if issubclass(tmp_class, TestCase):
-                    self.add_test_cases(*self._generate_test_case_instances(tmp_class))
+                    self.add_test_cases(*self._gen_test_case_instances(tmp_class))
                 else:
-                    raise ValueError('{}不是TestCase的子类}！'.format(tmp_class_str))
+                    raise ValueError('{}不是测试用例类}！'.format(tmp_class_str))
             else:
                 raise ValueError('指定的类不存在：{}！'.format(tmp_class_str))
 
@@ -186,7 +186,7 @@ class DefaultTestTask(TestTask):
             tmp_classes = getmembers(tmp_module, isclass)  # 获取模块中的所有类
             for _, tmp_class in tmp_classes:
                 if issubclass(tmp_class, TestCase) and tmp_class is not TestCase:  # 排除TestCase本身
-                    self.add_test_cases(*self._generate_test_case_instances(tmp_class))
+                    self.add_test_cases(*self._gen_test_case_instances(tmp_class))
 
     def add_test_cases_by_files(self, *files: str):
         """
@@ -197,11 +197,11 @@ class DefaultTestTask(TestTask):
         :return:
         """
         for _file in files:
-            new_file = gen_universal_path(_file)
+            new_file = handle_path(_file)
             new_file_name = new_file.split(os.sep)[-1]
             if not new_file_name.endswith('.py') or new_file_name == '__init__.py':
                 continue
-            self._add_test_cases_by_file(new_file, new_file_name[:-3])
+            self._add_test_cases_by_file(new_file, new_file_name)
 
     def add_test_cases_by_paths(self, *paths: str):
         """
@@ -212,19 +212,19 @@ class DefaultTestTask(TestTask):
         :return:
         """
         for path in paths:
-            new_path = gen_universal_path(path)
+            new_path = handle_path(path)
             for root_dir, _, file_names in os.walk(new_path):
                 for file_name in file_names:
                     if not file_name.endswith('.py') or file_name == '__init__.py':
                         continue
                     file_path = os.path.join(root_dir, file_name)
-                    self._add_test_cases_by_file(file_name[:-3], file_path)
+                    self._add_test_cases_by_file(file_path, file_name)
 
     def _add_test_cases_by_file(self, file_path, file_name):
         """
         通过文件增加测试用例
         :param file_path: 文件全路径
-        :param file_name: 文件名（不带后缀）
+        :param file_name: 文件名
         :return:
         """
         tmp_module_spec = util.spec_from_file_location(file_name[:-3], file_path)
@@ -232,17 +232,17 @@ class DefaultTestTask(TestTask):
         tmp_classes = getmembers(tmp_module, isclass)  # 获取模块中的所有类
         for _, tmp_class in tmp_classes:
             if issubclass(tmp_class, TestCase) and tmp_class is not TestCase:  # 排除TestCase本身
-                self.add_test_cases(*self._generate_test_case_instances(tmp_class))
+                self.add_test_cases(*self._gen_test_case_instances(tmp_class))
 
     @staticmethod
-    def _generate_test_case_instances(test_case):
+    def _gen_test_case_instances(test_case):
         """
         生成测试用例实例：参数化测试时，配合@parameterized装饰器使用。
         :param test_case: 测试用例类
         :return:
         """
         if not issubclass(test_case, TestCase):
-            raise ValueError('不是TestCase的子类！')
+            raise ValueError('不是测试用例类！')
         param_names = getattr(test_case, '_param_names') if hasattr(test_case, '_param_names') else None
         param_values = getattr(test_case, '_param_values') if hasattr(test_case, '_param_values') else None
         if param_names and param_values:  # 测试用例有参数化数据
@@ -286,7 +286,7 @@ class DefaultTestTask(TestTask):
         for test_case_filter in test_case_filters:
             self.test_case_filters.remove(test_case_filter)
 
-    def filter_test_case(self):
+    def filter_test_cases(self):
         for test_case_filter in self.test_case_filters:
             self.test_cases = test_case_filter.filter(self.test_cases)
 
