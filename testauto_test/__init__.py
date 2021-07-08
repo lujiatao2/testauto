@@ -1,3 +1,3 @@
 """
-testauto示例代码
+testauto测试和示例代码
 """

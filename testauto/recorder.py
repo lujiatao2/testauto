@@ -63,20 +63,22 @@ class DefaultTestRecorder(TestRecorder):
     def stop_run(self, test_case: TestCase, result: TestCaseResult, result_detail=''):
         test_case.stop_time = format_timestamp(time(), target_format='%H:%M:%S')
         test_case.result = result
-        if test_case.result == TestCaseResult.FAIL:
-            self.writer.write_error('“{}”执行失败：{}'.format(test_case.title, result_detail))
-        elif test_case.result == TestCaseResult.TIMEOUT:
-            self.writer.write_error('“{}”执行超时：{}'.format(test_case.title, result_detail))
-        elif test_case.result == TestCaseResult.BLOCK:
-            self.writer.write_error('“{}”执行阻塞：{}'.format(test_case.title, result_detail))
         test_case.result_detail = result_detail
+        if test_case.result == TestCaseResult.FAIL:
+            self.writer.write_error(f'“{test_case.title}”执行失败：{result_detail}')
+        elif test_case.result == TestCaseResult.TIMEOUT:
+            self.writer.write_error(f'“{test_case.title}”执行超时：{result_detail}')
+        elif test_case.result == TestCaseResult.BLOCK:
+            self.writer.write_error(f'“{test_case.title}”执行阻塞：{result_detail}')
 
     def calculate_test_result(self):
+        self.pass_count = 0
+        self.fail_count = 0
+        self.block_count = 0
+        self.timeout_count = 0
+        self.not_executed_count = 0
         self.total_count = len(self.test_cases)
-        test_cases = list(
-            filter(lambda tmp_test_case: tmp_test_case.result != TestCaseResult.NOT_EXECUTED, self.test_cases))
-        self.not_executed_count = self.total_count - len(test_cases)
-        for test_case in test_cases:
+        for test_case in self.test_cases:
             if test_case.result == TestCaseResult.PASS:
                 self.pass_count += 1
             elif test_case.result == TestCaseResult.FAIL:
@@ -85,28 +87,30 @@ class DefaultTestRecorder(TestRecorder):
                 self.block_count += 1
             elif test_case.result == TestCaseResult.TIMEOUT:
                 self.timeout_count += 1
+            elif test_case.result == TestCaseResult.NOT_EXECUTED:
+                self.not_executed_count += 1
 
     def gen_test_report(self):
         # 生成简单测试报告
         self.writer.write_line('=' * 150)
-        self.writer.write_line('执行总数：{}'.format(self.total_count))
+        self.writer.write_line(f'执行总数：{self.total_count}')
         start_time = format_timestamp(self.start_time)
         end_time = format_timestamp(self.end_time)
         take_time = seconds_to_time(int(self.end_time - self.start_time))
-        self.writer.write_line('开始时间：{}    结束时间：{}    执行耗时：{}'.format(start_time, end_time, take_time))
+        self.writer.write_line(f'开始时间：{start_time}    结束时间：{end_time}    执行耗时：{take_time}')
         self.writer.write_line('-' * 150)
-        self.writer.write_line('{:<10}{:<10}{}'.format('执行结果', '数量', '百分比（%）'))
-        pass_percentage = float('{:.2f}'.format(self.pass_count / self.total_count * 100.0))
-        self.writer.write_line('{:<10}{:<10}{}'.format('通过', self.pass_count, pass_percentage))
-        fail_percentage = float('{:.2f}'.format(self.fail_count / self.total_count * 100.0))
-        self.writer.write_line('{:<10}{:<10}{}'.format('失败', self.fail_count, fail_percentage))
-        block_percentage = float('{:.2f}'.format(self.block_count / self.total_count * 100.0))
-        self.writer.write_line('{:<10}{:<10}{}'.format('阻塞', self.block_count, block_percentage))
-        timeout_percentage = float('{:.2f}'.format(self.timeout_count / self.total_count * 100.0))
-        self.writer.write_line('{:<10}{:<10}{}'.format('超时', self.timeout_count, timeout_percentage))
+        self.writer.write_line(f'{"执行结果":<10}{"数量":<10}百分比（%）')
+        pass_percentage = float(f'{self.pass_count / self.total_count * 100.0:.2f}')
+        self.writer.write_line(f'{"通过":<10}{self.pass_count:<10}{pass_percentage}')
+        fail_percentage = float(f'{self.fail_count / self.total_count * 100.0:.2f}')
+        self.writer.write_line(f'{"失败":<10}{self.fail_count:<10}{fail_percentage}')
+        block_percentage = float(f'{self.block_count / self.total_count * 100.0:.2f}')
+        self.writer.write_line(f'{"阻塞":<10}{self.block_count:<10}{block_percentage}')
+        timeout_percentage = float(f'{self.timeout_count / self.total_count * 100.0:.2f}')
+        self.writer.write_line(f'{"超时":<10}{self.timeout_count:<10}{timeout_percentage}')
         not_executed_percentage = float(
-            '{:.2f}'.format(100 - pass_percentage - fail_percentage - block_percentage - timeout_percentage))
-        self.writer.write_line('{:<10}{:<10}{}'.format('未执行', self.not_executed_count, not_executed_percentage))
+            f'{100 - pass_percentage - fail_percentage - block_percentage - timeout_percentage:.2f}')
+        self.writer.write_line(f'{"未执行":<10}{self.not_executed_count:<10}{not_executed_percentage}')
         self.writer.write_line('=' * 150)
         # 生成HTML测试报告
         project = self.test_cases[0].project  # 取第一个测试用例的工程名作为测试报告的工程名
@@ -123,17 +127,17 @@ class DefaultTestRecorder(TestRecorder):
             file.write('\n')
             file.write('    </style>\n')
             file.write('    <meta charset="UTF-8">\n')
-            file.write('    <title>{}测试报告</title>\n'.format(project))
+            file.write(f'    <title>{project}测试报告</title>\n')
             file.write('</head>\n')
             file.write('<body>\n')
-            file.write('<h1 style="text-align: center">{}测试报告</h1>\n'.format(project))
+            file.write(f'<h1 style="text-align: center">{project}测试报告</h1>\n')
             file.write('<table style="width: 50%; margin: auto; text-align: center">\n')
             file.write('    <caption style="border-bottom: none; background-color: lightgray">\n')
             file.write(
                 '        <div style="border-bottom: 1px solid gray; font-size: 1.5rem; font-weight: bold">概 述</div>\n')
-            file.write('        <div style="padding: 0 5px; text-align: left">执行总数：{}</div>\n'.format(self.total_count))
-            file.write('        <div style="padding: 0 5px; text-align: left">开始时间：{}&nbsp;&nbsp;&nbsp;&nbsp;结束时间：{}'
-                       '&nbsp;&nbsp;&nbsp;&nbsp;执行耗时：{}</div>\n'.format(start_time, end_time, take_time))
+            file.write(f'        <div style="padding: 0 5px; text-align: left">执行总数：{self.total_count}</div>\n')
+            file.write(f'        <div style="padding: 0 5px; text-align: left">开始时间：{start_time}'
+                       f'&nbsp;&nbsp;&nbsp;&nbsp;结束时间：{end_time}&nbsp;&nbsp;&nbsp;&nbsp;执行耗时：{take_time}</div>\n')
             file.write('    </caption>\n')
             file.write('    <tr>\n')
             file.write('        <th style="width: 40%">执行结果</th>\n')
@@ -142,28 +146,28 @@ class DefaultTestRecorder(TestRecorder):
             file.write('    </tr>\n')
             file.write('    <tr>\n')
             file.write('        <td>通过</td>\n')
-            file.write('        <td>{}</td>\n'.format(self.pass_count))
-            file.write('        <td>{}</td>\n'.format(pass_percentage))
+            file.write(f'        <td>{self.pass_count}</td>\n')
+            file.write(f'        <td>{pass_percentage}</td>\n')
             file.write('    </tr>\n')
             file.write('    <tr>\n')
             file.write('        <td>失败</td>\n')
-            file.write('        <td>{}</td>\n'.format(self.fail_count))
-            file.write('        <td>{}</td>\n'.format(fail_percentage))
+            file.write(f'        <td>{self.fail_count}</td>\n')
+            file.write(f'        <td>{fail_percentage}</td>\n')
             file.write('    </tr>\n')
             file.write('    <tr>\n')
             file.write('        <td>阻塞</td>\n')
-            file.write('        <td>{}</td>\n'.format(self.block_count))
-            file.write('        <td>{}</td>\n'.format(block_percentage))
+            file.write(f'        <td>{self.block_count}</td>\n')
+            file.write(f'        <td>{block_percentage}</td>\n')
             file.write('    </tr>\n')
             file.write('    <tr>\n')
             file.write('        <td>超时</td>\n')
-            file.write('        <td>{}</td>\n'.format(self.timeout_count))
-            file.write('        <td>{}</td>\n'.format(timeout_percentage))
+            file.write(f'        <td>{self.timeout_count}</td>\n')
+            file.write(f'        <td>{timeout_percentage}</td>\n')
             file.write('    </tr>\n')
             file.write('    <tr>\n')
             file.write('        <td>未执行</td>\n')
-            file.write('        <td>{}</td>\n'.format(self.not_executed_count))
-            file.write('        <td>{}</td>\n'.format(not_executed_percentage))
+            file.write(f'        <td>{self.not_executed_count}</td>\n')
+            file.write(f'        <td>{not_executed_percentage}</td>\n')
             file.write('    </tr>\n')
             file.write('</table>\n')
             file.write('<br>\n')
@@ -183,37 +187,37 @@ class DefaultTestRecorder(TestRecorder):
             # 生成每条测试用例的测试结果
             for test_case in self.test_cases:
                 file.write('    <tr>\n')
-                file.write('        <td style="text-align: left">{}</td>\n'.format(test_case.module))
-                file.write('        <td style="text-align: left">{}</td>\n'.format(test_case.title))
-                file.write('        <td>{}</td>\n'.format(test_case.priority.name))
+                file.write(f'        <td style="text-align: left">{test_case.module}</td>\n')
+                file.write(f'        <td style="text-align: left">{test_case.title}</td>\n')
+                file.write(f'        <td>{test_case.priority.name}</td>\n')
                 if test_case.result == TestCaseResult.PASS:
-                    file.write('        <td>{}</td>\n'.format(test_case.start_time))
-                    file.write('        <td>{}</td>\n'.format(test_case.stop_time))
+                    file.write(f'        <td>{test_case.start_time}</td>\n')
+                    file.write(f'        <td>{test_case.stop_time}</td>\n')
                     file.write('        <td style="background-color: green">成功</td>\n')
                 elif test_case.result == TestCaseResult.FAIL:
-                    file.write('        <td>{}</td>\n'.format(test_case.start_time))
-                    file.write('        <td>{}</td>\n'.format(test_case.stop_time))
+                    file.write(f'        <td>{test_case.start_time}</td>\n')
+                    file.write(f'        <td>{test_case.stop_time}</td>\n')
                     file.write('        <td style="background-color: red; color: -webkit-link; cursor: pointer; '
                                'text-decoration: underline" onclick="openDetail(this)">失败</td>\n')
                 elif test_case.result == TestCaseResult.BLOCK:
-                    file.write('        <td>{}</td>\n'.format(test_case.start_time))
-                    file.write('        <td>{}</td>\n'.format(test_case.stop_time))
+                    file.write(f'        <td>{test_case.start_time}</td>\n')
+                    file.write(f'        <td>{test_case.stop_time}</td>\n')
                     file.write('        <td style="background-color: yellow; color: -webkit-link; cursor: pointer; '
                                'text-decoration: underline" onclick="openDetail(this)">阻塞</td>\n')
                 elif test_case.result == TestCaseResult.TIMEOUT:
-                    file.write('        <td>{}</td>\n'.format(test_case.start_time))
-                    file.write('        <td>{}</td>\n'.format(test_case.stop_time))
+                    file.write(f'        <td>{test_case.start_time}</td>\n')
+                    file.write(f'        <td>{test_case.stop_time}</td>\n')
                     file.write('        <td style="background-color: lightgray; color: -webkit-link; cursor: pointer; '
                                'text-decoration: underline" onclick="openDetail(this)">超时</td>\n')
                 elif test_case.result == TestCaseResult.NOT_EXECUTED:
-                    file.write('        <td>--</td>\n'.format(test_case.start_time))
-                    file.write('        <td>--</td>\n'.format(test_case.stop_time))
+                    file.write('        <td>--</td>\n')
+                    file.write('        <td>--</td>\n')
                     file.write('        <td>未执行</td>\n')
-                file.write('        <td style="display: none">{}</td>\n'.format(test_case.result_detail))
+                file.write(f'        <td style="display: none">{test_case.result_detail}</td>\n')
                 file.write('    </tr>\n')
             file.writelines('''</table>
 <div style="position: fixed; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: none" id="detail" onclick="closeDetail()">
-    <div style="width: 80%; max-height: 80%; z-index: 1; margin: 5% auto; overflow: auto; background-color: white" onclick="event.cancelBubble = true">
+    <div style="width: 80%; max-height: 80%; margin: 5% auto; overflow: auto; background-color: white" onclick="event.cancelBubble = true">
         <pre style="margin: 1rem; color: red; font-weight: bold" id="detail-content"></pre>
         <div style="margin-bottom: 1rem; text-align: center">
             <button onclick="closeDetail()">关 闭</button>

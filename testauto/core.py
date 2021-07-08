@@ -56,7 +56,7 @@ class TestAuto:
             if isinstance(result, TestRunner):
                 test_runner = result
             else:
-                raise ValueError('test_recorder不是TestRunner类型的对象！')
+                raise ValueError('test_runner不是TestRunner类型的对象！')
         else:
             test_runner: TestRunner = DefaultTestRunner()
         # 初始化终止策略
@@ -128,7 +128,7 @@ class CommandLine:
                             help='测试记录器。示例：-r path.to.module.callable，其中callable为返回TestRecorder对象的可调用对象。')
         parser.add_argument('-rn', '--test-runner',
                             help='测试执行器。示例：-rn path.to.module.callable，其中callable为返回TestRunner对象的可调用对象。')
-        parser.add_argument('-s', '--stop-strategy', type=int, help='终止策略。参数取值：0-全部完成（默认）/1-第一个未执行成功/2-第一个P0未执行成功')
+        parser.add_argument('-s', '--stop-strategy', type=int, help='终止策略。参数取值：0-全部完成（默认）/1-第一个未执行成功/2-第一个P0测试用例未执行成功')
         parser.add_argument('-rt', '--retry-strategy', type=int, help='重试策略。参数取值：0-不重试（默认）/1-立即重新执行测试用例/2-最后重新执行测试用例')
         parser.add_argument('-to', '--timeout', type=int, help='超时时间（单位秒）。参数取值：正整数')
         parser.add_argument('-p', '--parallel', type=int, help='并行执行数量。参数取值：正整数')
@@ -176,7 +176,7 @@ class CommandLine:
             if callable(tmp_callable):
                 tmp_object = tmp_callable()
             else:
-                raise ValueError('{}不可调用！'.format(tmp_callable_name))
+                raise ValueError(f'该对象不可调用：{tmp_callable_name}！')
             if isinstance(tmp_object, target_class):
                 return tmp_object
             else:
@@ -184,6 +184,6 @@ class CommandLine:
                 获取对象对应类的类名：object.__class__.__name__
                 获取类的类名：class.__name__
                 """
-                raise ValueError('源对象类型{}与目标类型{}不一致！'.format(tmp_object.__class__.__name__, target_class.__name__))
+                raise ValueError(f'源对象类型{tmp_object.__class__.__name__}与目标类型{target_class.__name__}不匹配！')
         else:
-            raise ValueError('无该可调用对象：{}！'.format(tmp_callable_name))
+            raise ValueError(f'无该可调用对象：{tmp_callable_name}！')

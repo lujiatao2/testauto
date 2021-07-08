@@ -41,11 +41,11 @@ class TestCaseCompletedShouldBe(TestCaseFilter):
 
     def filter(self, test_cases: List[TestCase]) -> List[TestCase]:
         if self.operation_method == OperationMethod.EQUAL:
-            return list(filter(lambda tmp: tmp.completed == self.test_case_completed, test_cases))
+            return [test_case for test_case in test_cases if test_case.completed == self.test_case_completed]
         elif self.operation_method == OperationMethod.NOT_EQUAL:
-            return list(filter(lambda tmp: tmp.completed != self.test_case_completed, test_cases))
+            return [test_case for test_case in test_cases if test_case.completed != self.test_case_completed]
         else:
-            raise ValueError('不支持的操作方法：{}！'.format(self.operation_method.value))
+            raise ValueError(f'不支持的操作方法：{self.operation_method.value}！')
 
 
 class TestCasePriorityShouldBe(TestCaseFilter):
@@ -57,18 +57,18 @@ class TestCasePriorityShouldBe(TestCaseFilter):
     def filter(self, test_cases: List[TestCase]) -> List[TestCase]:
         if self.operation_method == OperationMethod.EQUAL:
             if len(self.test_case_priorities) != 1:
-                raise ValueError('操作方法{}不支持多个条件！'.format(self.operation_method.value))
-            return list(filter(lambda tmp: tmp.priority == self.test_case_priorities[0], test_cases))
+                raise ValueError(f'操作方法{self.operation_method.value}不支持多个条件！')
+            return [test_case for test_case in test_cases if test_case.priority == self.test_case_priorities[0]]
         elif self.operation_method == OperationMethod.NOT_EQUAL:
             if len(self.test_case_priorities) != 1:
-                raise ValueError('操作方法{}不支持多个条件！'.format(self.operation_method.value))
-            return list(filter(lambda tmp: tmp.priority != self.test_case_priorities[0], test_cases))
+                raise ValueError(f'操作方法{self.operation_method.value}不支持多个条件！')
+            return [test_case for test_case in test_cases if test_case.priority != self.test_case_priorities[0]]
         elif self.operation_method == OperationMethod.CONTAINS:
-            return list(filter(lambda tmp: tmp.priority in self.test_case_priorities, test_cases))
+            return [test_case for test_case in test_cases if test_case.priority in self.test_case_priorities]
         elif self.operation_method == OperationMethod.NOT_CONTAINS:
-            return list(filter(lambda tmp: tmp.priority not in self.test_case_priorities, test_cases))
+            return [test_case for test_case in test_cases if test_case.priority not in self.test_case_priorities]
         else:
-            raise ValueError('不支持的操作方法：{}！'.format(self.operation_method.value))
+            raise ValueError(f'不支持的操作方法：{self.operation_method.value}！')
 
 
 class TestTask(ABC):
@@ -171,9 +171,9 @@ class DefaultTestTask(TestTask):
                 if issubclass(tmp_class, TestCase):
                     self.add_test_cases(*self._gen_test_case_instances(tmp_class))
                 else:
-                    raise ValueError('{}不是测试用例类}！'.format(tmp_class_str))
+                    raise ValueError(f'{tmp_class_str}不是测试用例类！')
             else:
-                raise ValueError('指定的类不存在：{}！'.format(tmp_class_str))
+                raise ValueError(f'指定的类不存在：{tmp_class_str}！')
 
     def add_test_cases_by_modules(self, *module_names: str):
         """
@@ -249,7 +249,7 @@ class DefaultTestTask(TestTask):
             # 类型检查：参数名类型应该为Tuple[str, ...]，参数值类型应该为List[tuple]。
             if isinstance(param_names, tuple) and isinstance(param_values, list):
                 # 类型检查：每个参数名类型应该为str。
-                if not all(list(map(lambda param_name: isinstance(param_name, str), param_names))):
+                if not all([isinstance(param_name, str) for param_name in param_names]):
                     raise ValueError('参数名不是字符串！')
                 test_cases = list()
                 for param_value in param_values:

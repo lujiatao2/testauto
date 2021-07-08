@@ -46,10 +46,10 @@ class TestCase(ABC):
         if param_names and param_values:
             if len(param_names) != len(param_values):
                 raise ValueError('参数名数量与参数值数量不匹配！')
-            for i in range(len(param_names)):
-                if param_names[i] in builtin_instance_attr:
+            for i, param_name in enumerate(param_names):
+                if param_name in builtin_instance_attr:
                     raise ValueError('参数名与内置的实例属性名冲突了！')
-                self.__dict__[param_names[i]] = param_values[i]  # 动态添加实例属性
+                self.__dict__[param_name] = param_values[i]  # 动态添加实例属性
         elif not param_names and not param_values:
             pass
         else:
@@ -86,4 +86,4 @@ class TestCase(ABC):
         try:
             return self.__dict__[param_name]
         except KeyError:
-            raise ValueError('参数{}不存在！'.format(param_name))
+            raise ValueError(f'参数{param_name}不存在！')

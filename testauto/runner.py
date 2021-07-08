@@ -14,7 +14,7 @@ from .task import TestTask
 class StopStrategy(Enum):
     ALL_COMPLETED = ('全部完成', 0)
     FIRST_NOT_PASS = ('第一个未执行成功', 1)
-    FIRST_P0_NOT_PASS = ('第一个P0未执行成功', 2)
+    FIRST_P0_NOT_PASS = ('第一个P0测试用例未执行成功', 2)
 
 
 class RetryStrategy(Enum):
@@ -68,11 +68,12 @@ class DefaultTestRunner(TestRunner):
         self.parallel = parallel
         self.test_recorder.start_time = time()
         self._run_test_task()
+        self.test_recorder.end_time = time()
         self.test_recorder.calculate_test_result()
         if self.test_recorder.total_count != self.test_recorder.pass_count and self.retry_strategy == RetryStrategy.RERUN_LAST:
             self._run_test_task()
+            self.test_recorder.end_time = time()
             self.test_recorder.calculate_test_result()
-        self.test_recorder.end_time = time()
         self.test_recorder.gen_test_report()
 
     def _run_test_task(self):
@@ -115,7 +116,7 @@ class DefaultTestRunner(TestRunner):
             if isinstance(first, AssertionError):
                 self.test_recorder.stop_run(test_case, TestCaseResult.FAIL, traceback.format_exc())
             elif isinstance(first, TimeoutError):
-                self.test_recorder.stop_run(test_case, TestCaseResult.TIMEOUT, '执行单个测试用例的超时时间为{}秒'.format(self.timeout))
+                self.test_recorder.stop_run(test_case, TestCaseResult.TIMEOUT, f'执行单个测试用例超时，超时时间为：{self.timeout}秒')
             else:
                 self.test_recorder.stop_run(test_case, TestCaseResult.BLOCK, traceback.format_exc())
             if self.stop_strategy == StopStrategy.FIRST_NOT_PASS or self.stop_strategy == StopStrategy.FIRST_P0_NOT_PASS and test_case.priority == TestCasePriority.P0:
@@ -141,6 +142,6 @@ class DefaultTestRunner(TestRunner):
                         self.test_recorder.stop_run(test_case, TestCaseResult.FAIL, traceback.format_exc())
                     elif isinstance(second, TimeoutError):
                         self.test_recorder.stop_run(test_case, TestCaseResult.TIMEOUT,
-                                                    '执行单个测试用例的超时时间为{}秒'.format(self.timeout))
+                                                    f'执行单个测试用例超时，超时时间为：{self.timeout}秒')
                     else:
                         self.test_recorder.stop_run(test_case, TestCaseResult.BLOCK, traceback.format_exc())

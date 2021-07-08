@@ -93,7 +93,7 @@ def seconds_to_time(seconds: int):
     """
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
-    return '{:0>2}时{:0>2}分{:0>2}秒'.format(h, m, s)
+    return f'{h:0>2}时{m:0>2}分{s:0>2}秒'
 
 
 class Writer:
